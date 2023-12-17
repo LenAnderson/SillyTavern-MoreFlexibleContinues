@@ -19,7 +19,7 @@ export class MenuItem {
             const item = document.createElement('li'); {
                 this.root = item;
                 item.classList.add('list-group-item');
-                item.classList.add('sc--ctx-item');
+                item.classList.add('mfc--ctx-item');
                 if (this.callback) {
                     item.addEventListener('click', (evt) => this.callback(evt, this));
                 }

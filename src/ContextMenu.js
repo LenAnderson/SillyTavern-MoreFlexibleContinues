@@ -23,12 +23,12 @@ export class ContextMenu {
         if (!this.root) {
             const blocker = document.createElement('div'); {
                 this.root = blocker;
-                blocker.classList.add('sc--ctx-blocker');
+                blocker.classList.add('mfc--ctx-blocker');
                 blocker.addEventListener('click', () => this.hide());
                 const menu = document.createElement('ul'); {
                     this.menu = menu;
                     menu.classList.add('list-group');
-                    menu.classList.add('sc--ctx-menu');
+                    menu.classList.add('mfc--ctx-menu');
                     this.itemList.forEach(it => menu.append(it.render()));
                     blocker.append(menu);
                 }
