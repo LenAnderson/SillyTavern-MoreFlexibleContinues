@@ -1,0 +1,144 @@
+@keyframes mfc--flash {
+	0% {
+		filter: invert(0);
+	}
+	50% {
+		filter: invert(1);
+	}
+	100% {
+		filter: invert(0);
+	}
+}
+
+.mfc--flash {
+	animation-name: flash;
+	animation-duration: 500ms;
+	animation-timing-function: linear;
+	animation-delay: 0s;
+	animation-iteration-count: 1;
+}
+.mfc--trigger {
+	display: inline-block;
+	cursor: pointer;
+}
+.mfc--action {
+	display: inline-block;
+	cursor: pointer;
+	width: 1em;
+	text-align: center;
+	opacity: 0.75;
+	&:hover {
+		opacity: 1;
+	}
+}
+.mfc--branchPoint {
+	::-webkit-scrollbar {
+		height: 10px;
+	}
+	::-webkit-scrollbar-thumb {
+		border-top: 2px solid transparent;
+	}
+
+	> .mfc--header {
+		background-color: rgb(80 80 80);
+		cursor: pointer;
+		text-align: center;
+		opacity: 0.75;
+		&:hover {
+			opacity: 1;
+		}
+	}
+
+	> .mfc--carousel {
+		display: none;
+		flex: 0 0 100px;
+		gap: 1em;
+		justify-Content: flex-start;
+		overflow-x: auto;
+		&.mfc--active {
+			display: flex;
+		}
+
+		> .mfc--child {
+			flex: 0 0 30%;
+			cursor: pointer;
+			width: 30%;
+			border: 2px solid rgb(80 80 80);
+			font-size: smaller;
+			opacity: 0.5;
+			&:hover {
+				opacity: 1;
+			}
+			&.mfc--current {
+				border-color: blue;
+			}
+
+			> .mfc--header {
+				font-style: italic;
+				border-bottom: 1px solid rgb(80 80 80);
+			}
+			> .mfc--body {
+				height: 100px;
+				overflow-y: auto;
+			}
+		}
+	}
+}
+
+
+.mfc--ctx-blocker {
+    /* backdrop-filter: blur(1px); */
+    /* background-color: rgba(0 0 0 / 10%); */
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 999;
+}
+
+.mfc--ctx-menu {
+    position: absolute;
+    overflow: visible;
+	font-size: smaller;
+}
+
+.list-group .list-group-item.mfc--ctx-header {
+    font-weight: bold;
+    cursor: default;
+}
+
+.mfc--ctx-item+.mfc--ctx-header {
+    border-top: 1px solid;
+}
+
+.mfc--ctx-item {
+    position: relative;
+}
+
+.mfc--ctx-expander {
+    border-left: 1px solid;
+    margin-left: 1em;
+    text-align: center;
+    width: 2em;
+}
+
+.mfc--ctx-expander:hover {
+    font-weight: bold;
+}
+
+.mfc--ctx-sub-menu {
+    position: absolute;
+    top: 0;
+    left: 100%;
+}
+
+@media screen and (max-width: 1000px) {
+    .mfc--ctx-blocker {
+        position: absolute;
+    }
+
+    .list-group .list-group-item.mfc--ctx-item {
+        padding: 1em;
+    }
+}
