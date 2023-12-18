@@ -9,6 +9,23 @@
     filter: invert(0);
   }
 }
+.mfc--hover {
+  position: relative;
+}
+.mfc--hover * {
+  opacity: 0.5;
+}
+.mfc--hover *.mfc--hoverOverlay {
+  opacity: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.mfc--hover *.mfc--hoverOverlay * {
+  opacity: 1;
+}
 .mfc--flash {
   animation-name: flash;
   animation-duration: 500ms;

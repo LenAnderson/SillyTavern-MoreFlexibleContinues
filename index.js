@@ -31,6 +31,45 @@ eventSource.on(event_types.GENERATION_STARTED, async(type)=>{
     log('[GENERATION_STARTED]', chat.slice(-1)[0].mes, chat.slice(-1)[0]);
 });
 
+let hoverMes;
+let hoverOverlay;
+const onUnhover = ()=>{
+    log('[UNHOVER]');
+    hoverOverlay?.remove();
+    hoverMes?.classList?.remove('mfc--hover');
+};
+const onHover = ()=>{
+    if (busy()) return;
+    log('[HOVER]');
+    const mes = chat.slice(-1)[0];
+    if (mes.continueSwipe.parent.length > 0) {
+        let swipe;
+        let swipes = mes.continueHistory;
+        let text = '';
+        mes.continueSwipe.parent.forEach(idx=>{
+            swipe = swipes[idx];
+            swipes = swipe.swipes;
+            text += swipe.mes;
+        });
+        let messageText = substituteParams(text);
+        messageText = messageFormatting(
+            messageText,
+            mes.name,
+            false,
+            mes.is_user,
+        );
+        const el = document.querySelector('#chat .last_mes .mes_text');
+        hoverMes = el;
+        const html = document.createElement('div');
+        hoverOverlay = html;
+        html.classList.add('mfc--hoverOverlay');
+        html.innerHTML = messageText;
+        html.style.padding = window.getComputedStyle(el).padding;
+        el.classList.add('mfc--hover');
+        el.append(html);
+    }
+};
+
 const makeSwipeDom = ()=>{
     Array.from(document.querySelectorAll('#chat .mes:not(.last_mes) .mfc--root')).forEach(it=>it.remove());
     const el = document.querySelector('#chat .last_mes');
@@ -42,6 +81,8 @@ const makeSwipeDom = ()=>{
                 undoTrigger.classList.add('mfc--action');
                 undoTrigger.textContent = '↶';
                 undoTrigger.title = 'Remove last continue';
+                undoTrigger.addEventListener('pointerenter', onHover);
+                undoTrigger.addEventListener('pointerleave', onUnhover);
                 undoTrigger.addEventListener('click', ()=>{
                     if (busy()) return;
                     log('[UNDO]');
@@ -79,41 +120,13 @@ const makeSwipeDom = ()=>{
                 redoTrigger.textContent = '↷';
                 // dom.append(redoTrigger);
             }
-            const swipesTrigger = document.createElement('span'); {
-                swipesTrigger.classList.add('mfc--swipes');
-                swipesTrigger.classList.add('mfc--action');
-                swipesTrigger.textContent = '▤';
-                swipesTrigger.title = 'Show continues';
-                swipesTrigger.addEventListener('click', (evt)=>{
-                    if (busy()) return;
-                    log('[SWIPES]');
-                    const mes = chat.slice(-1)[0];
-                    log(mes.continueSwipe?.swipes ?? []);
-                    if (mes.continueSwipe?.swipes?.length) {
-                        const menu = new ContextMenu(mes.continueSwipe?.swipes?.map((it,idx)=>new MenuItem(it, ()=>{
-                            mes.mes += it.mes;
-                            mes.continueSwipe = it;
-                            mes.continueSwipeId = idx;
-                            let messageText = substituteParams(mes.mes);
-                            messageText = messageFormatting(
-                                messageText,
-                                mes.name,
-                                false,
-                                mes.is_user,
-                            );
-                            document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
-                            saveChatConditional();
-                        })) ?? []);
-                        menu.show(evt);
-                    }
-                });
-                dom.append(swipesTrigger);
-            }
             const regen = document.createElement('span'); {
                 regen.classList.add('mfc--regen');
                 regen.classList.add('mfc--action');
                 regen.textContent = '↻';
                 regen.title = 'Regenerate last continue';
+                regen.addEventListener('pointerenter', onHover);
+                regen.addEventListener('pointerleave', onUnhover);
                 regen.addEventListener('click', async()=>{
                     if (busy()) return;
                     log('[REGEN]');
@@ -145,6 +158,36 @@ const makeSwipeDom = ()=>{
                     }
                 });
                 dom.append(regen);
+            }
+            const swipesTrigger = document.createElement('span'); {
+                swipesTrigger.classList.add('mfc--swipes');
+                swipesTrigger.classList.add('mfc--action');
+                swipesTrigger.textContent = '▤';
+                swipesTrigger.title = 'Show continues';
+                swipesTrigger.addEventListener('click', (evt)=>{
+                    if (busy()) return;
+                    log('[SWIPES]');
+                    const mes = chat.slice(-1)[0];
+                    log(mes.continueSwipe?.swipes ?? []);
+                    if (mes.continueSwipe?.swipes?.length) {
+                        const menu = new ContextMenu(mes.continueSwipe?.swipes?.map((it,idx)=>new MenuItem(it, ()=>{
+                            mes.mes += it.mes;
+                            mes.continueSwipe = it;
+                            mes.continueSwipeId = idx;
+                            let messageText = substituteParams(mes.mes);
+                            messageText = messageFormatting(
+                                messageText,
+                                mes.name,
+                                false,
+                                mes.is_user,
+                            );
+                            document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
+                            saveChatConditional();
+                        })) ?? []);
+                        menu.show(evt);
+                    }
+                });
+                dom.append(swipesTrigger);
             }
             const cont = document.createElement('span'); {
                 cont.classList.add('mfc--cont');
