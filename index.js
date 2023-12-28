@@ -60,15 +60,15 @@ const onGenerationStarted = async(type)=>{
 let hoverMes;
 let hoverOverlay;
 const onUnhover = ()=>{
-    log('[UNHOVER]');
+    // log('[UNHOVER]');
     hoverOverlay?.remove();
     hoverMes?.classList?.remove('mfc--hover');
 };
 const onHover = ()=>{
     if (busy()) return;
-    log('[HOVER]');
+    // log('[HOVER]');
     const mes = chat.slice(-1)[0];
-    if (mes.continueSwipe.parent.length > 0) {
+    if (mes.continueSwipe?.parent?.length) {
         let swipe;
         let swipes = mes.continueHistory;
         let text = '';
@@ -111,7 +111,7 @@ const buildSwipeDom = (mfc)=>{
                 if (busy()) return;
                 log('[UNDO]');
                 const mes = chat.slice(-1)[0];
-                if (mes.continueSwipe.parent.length > 0) {
+                if (mes.continueSwipe?.parent?.length) {
                     let swipeIdx;
                     let swipe;
                     let swipes = mes.continueHistory;
@@ -155,7 +155,7 @@ const buildSwipeDom = (mfc)=>{
                 if (busy()) return;
                 log('[REGEN]');
                 const mes = chat.slice(-1)[0];
-                if (mes.continueSwipe.parent.length > 0) {
+                if (mes.continueSwipe?.parent?.length) {
                     let swipeIdx;
                     let swipe;
                     let swipes = mes.continueHistory;
