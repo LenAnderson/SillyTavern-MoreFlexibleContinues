@@ -222,6 +222,7 @@ const buildSwipeDom = (mfc)=>{
                                     }
                                     mesmes += swipe.mes;
                                     log('NEW MES', mesmes);
+                                    mes.mes = mesmes;
                                     mes.continueSwipe = swipe;
                                     mes.continueSwipeId = ss.indexOf(swipe);
                                     mes.continueHistory[mes.swipe_id ?? 0].active = [...swipe.parent, ss.indexOf(swipe)];
@@ -247,7 +248,7 @@ const buildSwipeDom = (mfc)=>{
                                             if (i === act[0]) {
                                                 li.classList.add('mfc--active');
                                             }
-                                            li.append(renderTree(s, act.slice(1)));
+                                            li.append(renderTree(s, i === act[0] ? act.slice(1) : []));
                                             ul.append(li);
                                         }
                                         i++;
