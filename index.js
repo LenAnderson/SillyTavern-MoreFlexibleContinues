@@ -51,14 +51,17 @@ const insertContinueData = (mes)=>{
         mes.continueHistory[mes.swipe_id ?? 0].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
     }
 };
-const onGenerationStarted = async(type)=>{
-    log('onGenerationStarted', type);
-    if (type != 'continue' && type != 'normal') return;
+const onGenerationStarted = async(type, namedArgs, dryRun)=>{
+    log('onGenerationStarted', { type, dryRun });
+    if (dryRun || !['continue', 'normal', 'swipe'].includes(type)) return;
     const mes = chat.slice(-1)[0];
     insertContinueData(mes);
     if (type == 'continue') {
         isListening = true;
         startMes = mes.mes;
+    } else if (type == 'swipe') {
+        isListening = true;
+        startMes = '';
     }
     log('[GENERATION_STARTED]', chat.slice(-1)[0].mes, chat.slice(-1)[0]);
 };
@@ -314,23 +317,28 @@ const onMessageDone = async(mesIdx)=>{
     insertContinueData(mes);
     if (!isListening) return;
     if (mes.mes == startMes) return;
+    if (mes.mes == '...') return;
     isListening = false;
     log(mes.mes, mes);
     // eslint-disable-next-line no-unused-vars
-    const [_, ...rest] = mes.mes.split(startMes);
-    const newMes = rest.join(startMes);
-    const swipe = {
-        mes: newMes,
-        swipes: [],
-        parent: [...mes.continueSwipe.parent, mes.continueSwipeId],
-    };
-    let swipes = mes.continueHistory;
-    swipe.parent.forEach(it=>swipes = swipes[it].swipes);
-    swipes.push(swipe);
-    mes.continueSwipe = swipe;
-    mes.continueSwipeId = swipes.length - 1;
-    mes.continueHistory[mes.swipe_id ?? 0].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
-    log(mes);
+    if (startMes == '') {
+        mes.continueHistory[mes.swipe_id ?? 0].mes = mes.mes;
+    } else {
+        const [_, ...rest] = mes.mes.split(startMes);
+        const newMes = rest.join(startMes);
+        const swipe = {
+            mes: newMes,
+            swipes: [],
+            parent: [...mes.continueSwipe.parent, mes.continueSwipeId],
+        };
+        let swipes = mes.continueHistory;
+        swipe.parent.forEach(it=>swipes = swipes[it].swipes);
+        swipes.push(swipe);
+        mes.continueSwipe = swipe;
+        mes.continueSwipeId = swipes.length - 1;
+        mes.continueHistory[mes.swipe_id ?? 0].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
+        log(mes);
+    }
     makeSwipeDom();
 };
 
@@ -436,12 +444,12 @@ eventSource.on(event_types.APP_READY, ()=>{
     };
     addSettings();
 
-    eventSource.on(event_types.GENERATION_STARTED, onGenerationStarted);
-    eventSource.on(event_types.GENERATION_STOPPED, onMessageDone);
-    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageDone);
-    eventSource.on(event_types.USER_MESSAGE_RENDERED, onMessageDone);
-    eventSource.on(event_types.MESSAGE_EDITED, onMessageEdited);
-    eventSource.on(event_types.CHAT_CHANGED, makeSwipeDom);
-    eventSource.on(event_types.MESSAGE_DELETED, makeSwipeDom);
-    eventSource.on(event_types.MESSAGE_SWIPED, onSwipe);
+    eventSource.on(event_types.GENERATION_STARTED, (...args)=>{log('GENERATION_STARTED', args);onGenerationStarted(...args)});
+    eventSource.on(event_types.GENERATION_STOPPED, (...args)=>{log('GENERATION_STOPPED', args);onMessageDone(...args)});
+    eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (...args)=>{log('CHARACTER_MESSAGE_RENDERED', args);onMessageDone(...args)});
+    eventSource.on(event_types.USER_MESSAGE_RENDERED, (...args)=>{log('USER_MESSAGE_RENDERED', args);onMessageDone(...args)});
+    eventSource.on(event_types.MESSAGE_EDITED, (...args)=>{log('MESSAGE_EDITED', args);onMessageEdited(...args)});
+    eventSource.on(event_types.CHAT_CHANGED, (...args)=>{log('CHAT_CHANGED', args);makeSwipeDom(...args)});
+    eventSource.on(event_types.MESSAGE_DELETED, (...args)=>{log('MESSAGE_DELETED', args);makeSwipeDom(...args)});
+    eventSource.on(event_types.MESSAGE_SWIPED, (...args)=>{log('MESSAGE_SWIPED', args);onSwipe(...args)});
 });
