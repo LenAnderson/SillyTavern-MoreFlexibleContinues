@@ -30,30 +30,36 @@ settings = extension_settings.moreFlexibleContinues;
 
 let isListening = false;
 let startMes;
-const onGenerationStarted = async(type)=>{
-    if (type != 'continue') return;
-    isListening = true;
-    const mes = chat.slice(-1)[0];
-    if (!mes.continueHistory || !mes.continueHistory[mes.swipe_id]) {
+const insertContinueData = (mes)=>{
+    if (!mes.continueHistory || !mes.continueHistory[mes.swipe_id ?? 0]) {
         if (!mes.continueHistory) {
-            mes.continueHistory = mes.swipes.map(it=>({
+            mes.continueHistory = (mes.swipes ?? [mes.mes]).map(it=>({
                 mes: it,
                 swipes: [],
                 parent: [],
                 active: null,
             }));
-        } else if (!mes.continueHistory[mes.swipe_id]) {
-            mes.continueHistory[mes.swipe_id] = {
-                mes: mes.swipes[mes.swipe_id],
+        } else if (!mes.continueHistory[mes.swipe_id ?? 0]) {
+            mes.continueHistory[mes.swipe_id ?? 0] = {
+                mes: mes.swipe_id === undefined ? mes.mes : mes.swipes[mes.swipe_id],
                 swipes: [],
                 parent: [],
             };
         }
-        mes.continueSwipeId = mes.swipe_id;
-        mes.continueSwipe = mes.continueHistory[mes.swipe_id];
-        mes.continueHistory[mes.swipe_id].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
+        mes.continueSwipeId = mes.swipe_id ?? 0;
+        mes.continueSwipe = mes.continueHistory[mes.swipe_id ?? 0];
+        mes.continueHistory[mes.swipe_id ?? 0].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
     }
-    startMes = mes.mes;
+};
+const onGenerationStarted = async(type)=>{
+    log('onGenerationStarted', type);
+    if (type != 'continue' && type != 'normal') return;
+    const mes = chat.slice(-1)[0];
+    insertContinueData(mes);
+    if (type == 'continue') {
+        isListening = true;
+        startMes = mes.mes;
+    }
     log('[GENERATION_STARTED]', chat.slice(-1)[0].mes, chat.slice(-1)[0]);
 };
 
@@ -115,6 +121,7 @@ const buildSwipeDom = (mfc)=>{
                     let swipeIdx;
                     let swipe;
                     let swipes = mes.continueHistory;
+                    swipes[mes.continueSwipe.parent[0]].active.pop();
                     let text = '';
                     mes.continueSwipe.parent.forEach(idx=>{
                         swipeIdx = idx;
@@ -191,24 +198,74 @@ const buildSwipeDom = (mfc)=>{
             swipesTrigger.addEventListener('click', (evt)=>{
                 if (busy()) return;
                 log('[SWIPES]');
+
                 const mes = chat.slice(-1)[0];
-                log(mes.continueSwipe?.swipes ?? []);
-                if (mes.continueSwipe?.swipes?.length) {
-                    const menu = new ContextMenu(mes.continueSwipe?.swipes?.map((it,idx)=>new MenuItem(it, ()=>{
-                        mes.mes += it.mes;
-                        mes.continueSwipe = it;
-                        mes.continueSwipeId = idx;
-                        let messageText = substituteParams(mes.mes);
-                        messageText = messageFormatting(
-                            messageText,
-                            mes.name,
-                            false,
-                            mes.is_user,
-                        );
-                        document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
-                        saveChatConditional();
-                    })) ?? []);
-                    menu.show(evt);
+                if (mes.continueHistory[mes.swipe_id ?? 0]) {
+                    const renderTree = (swipe, act, isRoot=false)=>{
+                        const el = document.createElement('div'); {
+                            el.classList.add('mfc--tree');
+                            el.classList.add('list-group');
+                            el.classList.add('mfc--ctx-item');
+                            const txt = document.createElement('div'); {
+                                txt.classList.add('mfc--treeText');
+                                txt.textContent = swipe.mes;
+                                txt.addEventListener('click', ()=>{
+                                    let mesmes = '';
+                                    let ss = mes.continueHistory;
+                                    for (const idx of swipe.parent) {
+                                        const s = ss[idx];
+                                        mesmes += s.mes;
+                                        ss = s.swipes;
+                                    }
+                                    mesmes += swipe.mes;
+                                    log('NEW MES', mesmes);
+                                    mes.continueSwipe = swipe;
+                                    mes.continueSwipeId = ss.indexOf(swipe);
+                                    mes.continueHistory[mes.swipe_id ?? 0].active = [...swipe.parent, ss.indexOf(swipe)];
+                                    let messageText = substituteParams(mesmes);
+                                    messageText = messageFormatting(
+                                        messageText,
+                                        mes.name,
+                                        false,
+                                        mes.is_user,
+                                    );
+                                    document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
+                                    saveChatConditional();
+                                });
+                                el.append(txt);
+                            }
+                            if (swipe.swipes.length > 0) {
+                                const ul = document.createElement('ul'); {
+                                    ul.classList.add('mfc--children');
+                                    let i = 0;
+                                    for (const s of swipe.swipes) {
+                                        const li = document.createElement('li'); {
+                                            li.classList.add('list-group-item');
+                                            if (i === act[0]) {
+                                                li.classList.add('mfc--active');
+                                            }
+                                            li.append(renderTree(s, act.slice(1)));
+                                            ul.append(li);
+                                        }
+                                        i++;
+                                    }
+                                    el.append(ul);
+                                }
+                            }
+                        }
+                        return el;
+                    };
+                    const blocker = document.createElement('div'); {
+                        blocker.classList.add('mfc--ctx-blocker');
+                        blocker.addEventListener('click', ()=>{
+                            blocker.remove();
+                        });
+                        const content = renderTree(mes.continueHistory[mes.swipe_id ?? 0], mes.continueHistory[mes.swipe_id ?? 0].active.slice(1), true);
+                        blocker.append(content);
+                        content.style.top = `${swipesTrigger.getBoundingClientRect().bottom}px`;
+                        content.style.left = `${swipesTrigger.getBoundingClientRect().right}px`;
+                        document.body.append(blocker);
+                    }
                 }
             });
             dom.append(swipesTrigger);
@@ -230,6 +287,9 @@ const buildSwipeDom = (mfc)=>{
     return dom;
 };
 const makeSwipeDom = ()=>{
+    for (const mes of chat) {
+        insertContinueData(mes);
+    }
     Array.from(document.querySelectorAll('#chat .mes:not(.last_mes) .mfc--root')).forEach(it=>it.remove());
     const el = document.querySelector('#chat .last_mes');
     const elTop = el.querySelector('.name_text').parentElement;
@@ -250,8 +310,9 @@ const makeSwipeDom = ()=>{
 
 const onMessageDone = async(mesIdx)=>{
     makeSwipeDom();
-    if (!isListening) return;
     const mes = chat[mesIdx];
+    insertContinueData(mes);
+    if (!isListening) return;
     if (mes.mes == startMes) return;
     isListening = false;
     log(mes.mes, mes);
@@ -268,7 +329,7 @@ const onMessageDone = async(mesIdx)=>{
     swipes.push(swipe);
     mes.continueSwipe = swipe;
     mes.continueSwipeId = swipes.length - 1;
-    mes.continueHistory[mes.swipe_id].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
+    mes.continueHistory[mes.swipe_id ?? 0].active = [...mes.continueSwipe.parent, mes.continueSwipeId];
     log(mes);
     makeSwipeDom();
 };
@@ -276,10 +337,40 @@ const onMessageDone = async(mesIdx)=>{
 const onMessageEdited = async(mesIdx)=>{
     log('[MESSAGE_EDITED]', mesIdx);
     if (Number(mesIdx) + 1 == chat.length) {
-        const mes = chat.slice(-1)[0];
-        chat[mesIdx].continueHistory[mes.swipe_id] = undefined;
-        chat[mesIdx].continueSwipeId = undefined;
-        chat[mesIdx].continueSwipe = undefined;
+        // check how much of the beginning of the message is still intact
+        let swipes = chat[mesIdx].continueHistory;
+        let swipe;
+        let text = '';
+        const active = [];
+        for (const idx of chat[mesIdx].continueHistory[chat[mesIdx].swipe_id ?? 0].active) {
+            swipe = swipes[idx];
+            const newText = `${text}${swipes[idx].mes}`;
+            if (!chat[mesIdx].mes.startsWith(newText)) {
+                swipe.mes = chat[mesIdx].mes.substring(text.length);
+                swipe.swipes = [];
+                active.push(idx);
+                chat[mesIdx].continueHistory[chat[mesIdx].swipe_id ?? 0].active = active;
+                chat[mesIdx].continueSwipe = swipe;
+                chat[mesIdx].continueSwipeId = idx;
+                text = chat[mesIdx].mes;
+                break;
+            }
+            active.push(idx);
+            swipes = swipe.swipes;
+            text = newText;
+        }
+
+        if (text.length < chat[mesIdx].mes.length) {
+            const newSwipe = {
+                mes: chat[mesIdx].mes.substring(text.length),
+                parent: [...swipe.parent, active.slice(-1)[0]],
+                swipes: [],
+            };
+            swipe.swipes.push(newSwipe);
+            chat[mesIdx].continueSwipe = newSwipe;
+            chat[mesIdx].continueSwipeId = swipe.swipes.length - 1;
+            chat[mesIdx].continueHistory[chat[mesIdx].swipe_id ?? 0].active = [...newSwipe.parent, swipe.swipes.length - 1];
+        }
     }
 };
 
@@ -290,12 +381,12 @@ const onSwipe = async(...args)=>{
         let swipes = mes.continueHistory;
         let swipe;
         let swipeIdx;
-        mes.continueHistory[mes.swipe_id]?.active?.forEach(idx=>{
+        mes.continueHistory[mes.swipe_id ?? 0]?.active?.forEach(idx=>{
             swipeIdx = idx;
             swipe = swipes[idx];
             swipes = swipe.swipes;
         });
-        mes.continueSwipeId = swipeIdx ?? mes.swipe_id;
+        mes.continueSwipeId = swipeIdx ?? mes.swipe_id ?? 0;
         mes.continueSwipe = swipe;
     }
 };

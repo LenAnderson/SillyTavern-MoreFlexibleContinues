@@ -99,6 +99,38 @@
   height: 100px;
   overflow-y: auto;
 }
+.mfc--ctx-blocker:has(.mfc--tree) {
+  font-size: smaller;
+}
+.mfc--ctx-blocker:has(.mfc--tree) > .mfc--tree > .mfc--treeText {
+  color: var(--SmartThemeQuoteColor);
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--active {
+  opacity: 0.8;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--active:hover {
+  opacity: 1;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--active > .mfc--tree > .mfc--treeText {
+  color: var(--SmartThemeQuoteColor);
+}
+.mfc--ctx-blocker:has(.mfc--tree) > .mfc--tree {
+  position: absolute;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--treeText:hover {
+  text-decoration: dotted underline;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--tree {
+  font-size: 1em;
+  cursor: default;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--tree .list-group-item {
+  cursor: default;
+}
+.mfc--ctx-blocker:has(.mfc--tree) .mfc--tree > .mfc--children {
+  margin: 0;
+  padding: 0;
+}
 .mfc--ctx-blocker {
   /* backdrop-filter: blur(1px); */
   /* background-color: rgba(0 0 0 / 10%); */
