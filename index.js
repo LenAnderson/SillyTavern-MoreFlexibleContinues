@@ -355,12 +355,17 @@ const onMessageEdited = async(mesIdx)=>{
             swipe = swipes[idx];
             const newText = `${text}${swipes[idx].mes}`;
             if (!chat[mesIdx].mes.startsWith(newText)) {
-                swipe.mes = chat[mesIdx].mes.substring(text.length);
-                swipe.swipes = [];
-                active.push(idx);
+                const newSwipe = {
+                    mes: chat[mesIdx].mes.substring(text.length),
+                    parent: swipe.parent,
+                    swipes: [],
+                };
+                const newIdx = swipes.length;
+                swipes.push(newSwipe);
+                active.push(newIdx);
                 chat[mesIdx].continueHistory[chat[mesIdx].swipe_id ?? 0].active = active;
-                chat[mesIdx].continueSwipe = swipe;
-                chat[mesIdx].continueSwipeId = idx;
+                chat[mesIdx].continueSwipe = newSwipe;
+                chat[mesIdx].continueSwipeId = newIdx;
                 text = chat[mesIdx].mes;
                 break;
             }
