@@ -144,6 +144,7 @@ const buildSwipeDom = (mfc)=>{
                     );
                     document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
                     saveChatConditional();
+                    eventSource.emit(event_types.MESSAGE_EDITED, chat.length - 1);
                 }
             });
             dom.append(undoTrigger);
@@ -235,6 +236,7 @@ const buildSwipeDom = (mfc)=>{
                                     );
                                     document.querySelector('#chat .last_mes .mes_text').innerHTML = messageText;
                                     saveChatConditional();
+                                    eventSource.emit(event_types.MESSAGE_EDITED, chat.length - 1);
                                 });
                                 el.append(txt);
                             }
