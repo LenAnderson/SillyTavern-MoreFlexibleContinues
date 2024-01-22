@@ -1,4 +1,4 @@
-import { Generate, chat, eventSource, event_types, messageFormatting, saveChatConditional, saveSettingsDebounced, substituteParams } from '../../../../script.js';
+import { Generate, callPopup, chat, eventSource, event_types, messageFormatting, saveChatConditional, saveSettingsDebounced, substituteParams } from '../../../../script.js';
 import { extension_settings } from '../../../extensions.js';
 import { ContextMenu } from './src/ContextMenu.js';
 import { MenuItem } from './src/MenuItem.js';
@@ -315,6 +315,7 @@ const makeSwipeDom = ()=>{
 };
 
 const onMessageDone = async(mesIdx)=>{
+    addSwipesButton(mesIdx, true);
     makeSwipeDom();
     const mes = chat[mesIdx];
     insertContinueData(mes);
@@ -407,6 +408,51 @@ const onSwipe = async(...args)=>{
     }
 };
 
+const addSwipesButtons = ()=>{
+    Array.from(document.querySelectorAll('#chat > .mes[mesid]')).forEach(it=>addSwipesButton(it.getAttribute('mesid')));
+};
+const addSwipesButton = (mesIdx, isForced = false)=>{
+    const container = document.querySelector(`#chat > .mes[mesid="${mesIdx}"] .extraMesButtons`);
+    if (!isForced && container.querySelector('.mfc--button')) return;
+    Array.from(container.querySelectorAll('.mfc--button')).forEach(it=>it.remove());
+    const mes = chat[mesIdx];
+    const btn = document.createElement('div'); {
+        btn.classList.add('mfc--button');
+        btn.textContent = '▤';
+        btn.title = `View swipes (${mes.swipes?.length ?? 0})`;
+        btn.addEventListener('click', async(evt)=>{
+            const dom = document.createElement('div'); {
+                dom.classList.add('mfc--swipesModal');
+                (mes.swipes ?? []).forEach((text, idx)=>{
+                    const swipe = document.createElement('div'); {
+                        swipe.classList.add('mfc--swipe');
+                        swipe.classList.add('mes_text');
+                        if (idx == mes.swipe_id) {
+                            swipe.classList.add('mfc--current');
+                        }
+                        let messageText = substituteParams(text);
+                        messageText = messageFormatting(
+                            messageText,
+                            mes.name,
+                            false,
+                            mes.is_user,
+                        );
+                        swipe.innerHTML = messageText;
+                        dom.append(swipe);
+                    }
+                });
+            }
+            await callPopup(dom, 'text', null, { wide:true, large:true });
+        });
+        container.firstElementChild.insertAdjacentElement('beforebegin', btn);
+    }
+};
+
+const onChatChanged = ()=>{
+    makeSwipeDom();
+    addSwipesButtons();
+};
+
 
 
 
@@ -457,7 +503,7 @@ eventSource.on(event_types.APP_READY, ()=>{
     eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, (...args)=>{log('CHARACTER_MESSAGE_RENDERED', args);onMessageDone(...args)});
     eventSource.on(event_types.USER_MESSAGE_RENDERED, (...args)=>{log('USER_MESSAGE_RENDERED', args);onMessageDone(...args)});
     eventSource.on(event_types.MESSAGE_EDITED, (...args)=>{log('MESSAGE_EDITED', args);onMessageEdited(...args)});
-    eventSource.on(event_types.CHAT_CHANGED, (...args)=>{log('CHAT_CHANGED', args);makeSwipeDom(...args)});
+    eventSource.on(event_types.CHAT_CHANGED, (...args)=>{log('CHAT_CHANGED', args);onChatChanged();});
     eventSource.on(event_types.MESSAGE_DELETED, (...args)=>{log('MESSAGE_DELETED', args);makeSwipeDom(...args)});
     eventSource.on(event_types.MESSAGE_SWIPED, (...args)=>{log('MESSAGE_SWIPED', args);onSwipe(...args)});
 });

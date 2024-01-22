@@ -178,3 +178,21 @@
     padding: 1em;
   }
 }
+.mfc--swipesModal .mfc--swipe {
+  border: 1px solid var(--SmartThemeBorderColor);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: justify;
+  opacity: 0.5;
+  transition: 200ms;
+  margin-bottom: 1em;
+}
+.mfc--swipesModal .mfc--swipe:hover {
+  opacity: 1;
+}
+.mfc--swipesModal .mfc--swipe.mfc--current {
+  opacity: 0.75;
+}
+.mfc--swipesModal .mfc--swipe.mfc--current:hover {
+  opacity: 1;
+}
