@@ -417,7 +417,7 @@ const addSwipesButton = (mesIdx, isForced = false)=>{
     Array.from(container.querySelectorAll('.mfc--button')).forEach(it=>it.remove());
     const mes = chat[mesIdx];
     const btn = document.createElement('div'); {
-        $(btn).addClass('mfc--button mes_swipes fa-solid fa-arrows-left-right-to-line');
+        btn.classList.add('mfc--button', 'mes_swipes', 'fa-solid', 'fa-arrows-left-right-to-line');
         btn.title = `View swipes (${mes.swipes?.length ?? 0})`;
         btn.addEventListener('click', async(evt)=>{
             const dom = document.createElement('div'); {
